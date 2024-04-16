@@ -80,7 +80,16 @@ sign() {
   shift
   echo "Signing $chart"
   shasum=$(openssl dgst -sha512 $chart| awk '{ print $2 }')
-  chartyaml=$(tar -zxf $chart --exclude 'charts/' -O '*/Chart.yaml')
+  case "$OSTYPE" in
+    "linux-gnu"*)
+      chartyaml=$(tar -zxf $chart --wildcards --exclude 'charts/' -O '*/Chart.yaml')
+    ;;
+    "darwin"*)
+      chartyaml=$(tar -zxf $chart --exclude 'charts/' -O '*/Chart.yaml')
+    ;;
+    *)
+      chartyaml=$(tar -zxf $chart --exclude 'charts/' -O '*/Chart.yaml')
+  esac
 c=$(cat << EOF
 $chartyaml
 
@@ -153,7 +162,7 @@ case "${1:-"help"}" in
         shift 2
       fi
       if [[ "$1" == "--passphrase" ]] || [[ "$1" == "--passphrase-file" ]]; then
-        passphrase="${1} ${2}"
+        passphrase="--pinentry-mode=loopback --batch --quiet --yes ${1} ${2}"
         echo "Setting passphrase to ${passphrase}"
         shift 2
       fi
